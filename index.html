@@ -11,6 +11,9 @@
 </head>
 
 <body>
+  <canvas id="bg">
+    
+  </canvas>
   <script type="importmap">
     {
   "imports": {
@@ -22,61 +25,60 @@
     import * as THREE from "three";
     
     import { OrbitControls } from "https://unpkg.com/three@0.179.1/examples/jsm/controls/OrbitControls.js";
+    
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
       innerWidth / innerHeight,
       0.1,
       1000
-    )
-    const renderer = new THREE.WebGLRenderer();
+    );
+    const canvas = document.querySelector("#bg");
+    const renderer = new THREE.WebGLRenderer({
+      canvas
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
     const controls = new OrbitControls(
       camera,
-      renderer.domElement
+      canvas
     );
     controls.enableDamping = true;
-    controls.target.set(0,0,0);
-    camera.position.z = 5;
+    camera.position.z = 3;
     
-    
-    // earth texture start ----
-    const loader = new THREE.TextureLoader();
+    let loader = new THREE.TextureLoader();
     const earthTexture = loader.load("earth.jpg");
-    // earth texture ended
     
-    const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
+    const sphereGeometry = new THREE.SphereGeometry(1,32,32);
     const sphereMaterial = new THREE.MeshStandardMaterial({
       map: earthTexture
     });
     
-    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    scene.add(sphere);
+    const earth = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    scene.add(earth);
     
-    const light = new THREE.DirectionalLight(0xffffff, 2);
-    light.position.set(5, 5, 5);
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5,5,5);
     scene.add(light);
-    
     const ambient = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambient);
+    
     let angle = 0;
     
-    function animate() {
+    function animate(){
       requestAnimationFrame(animate);
-      //sphere.rotation.x += 0.1;
-      sphere.rotation.y += 0.01;
-      sphere.rotation.z = 0.41;
-      angle += 0.005;
-      light.position.y = 2 //5 * Math.cos(angle);
+      earth.rotation.y += 0.01;
+      earth.rotation.z = 0.41;
+      angle += 0.01;
+      light.position.y = 2;
       light.position.x = 5 * Math.cos(angle);
       light.position.z = 5 * Math.sin(angle);
       controls.update();
       
-      renderer.render(scene, camera)
+      renderer.render(scene,camera);
     }
     animate();
   </script>
 </body>
 
 </html>
+
