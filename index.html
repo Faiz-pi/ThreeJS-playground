@@ -12,7 +12,7 @@
 
 <body>
   <canvas id="bg">
-    
+  
   </canvas>
   <script type="importmap">
     {
@@ -43,42 +43,69 @@
       canvas
     );
     controls.enableDamping = true;
-    camera.position.z = 3;
+    controls.target.set(0,0,0);
+    camera.position.set(0,5,10)
     
     let loader = new THREE.TextureLoader();
     const earthTexture = loader.load("earth.jpg");
-    
-    const sphereGeometry = new THREE.SphereGeometry(1,32,32);
+    // earth
+    const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
     const sphereMaterial = new THREE.MeshStandardMaterial({
       map: earthTexture
     });
     
     const earth = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    scene.add(earth);
+    earth.rotation.z = 0.41;
+    earth.position.x = 5;
     
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5,5,5);
-    scene.add(light);
+    // Sun
+    const sunTexture = loader.load("sun.jpg");
+    const sunGeometry = new THREE.SphereGeometry(1, 32, 32);
+    const sunMaterial = new THREE.MeshBasicMaterial({
+      map: sunTexture
+    });
+    const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+    scene.add(sun);
+    
+    // earth Grouping
+    const earthGroup = new THREE.Group();
+    earthGroup.add(earth);
+    scene.add(earthGroup);
+    // moon groupinv
+    const moonGroup = new THREE.Group();
+    earth.add(moonGroup);
+    
+    // moon
+    const moonTexture = loader.load("moon.jpg");
+    const moonGeometry = new THREE.SphereGeometry(0.35, 32, 32);
+    const moonMaterial = new THREE.MeshStandardMaterial({
+      map: moonTexture
+    });
+    const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+    moonGroup.add(moon);
+    moon.position.x = 2;
+    
+    
+    const light = new THREE.PointLight(0xffffff, 30,100);
+    light.position.set(0,0,0);
+    sun.add(light);
     const ambient = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambient);
     
-    let angle = 0;
     
-    function animate(){
+    function animate() {
       requestAnimationFrame(animate);
+      sun.rotation.y += 0.0025;
       earth.rotation.y += 0.01;
-      earth.rotation.z = 0.41;
-      angle += 0.01;
-      light.position.y = 2;
-      light.position.x = 5 * Math.cos(angle);
-      light.position.z = 5 * Math.sin(angle);
+      earthGroup.rotation.y += 0.005;
+      moonGroup.rotation.y += 0.02;
+      moon.rotation.y += 0.005;
       controls.update();
       
-      renderer.render(scene,camera);
+      renderer.render(scene, camera);
     }
     animate();
   </script>
 </body>
 
 </html>
-
