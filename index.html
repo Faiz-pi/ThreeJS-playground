@@ -11,6 +11,7 @@
 </head>
 
 <body>
+  
   <canvas id="bg">
   
   </canvas>
@@ -44,7 +45,14 @@
     );
     controls.enableDamping = true;
     controls.target.set(0,0,0);
-    camera.position.set(0,5,10)
+    camera.position.set(0,5,10);
+    
+    // event listener 
+    window.addEventListener("resize", ()=>{
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
     
     let loader = new THREE.TextureLoader();
     const earthTexture = loader.load("earth.jpg");
@@ -85,13 +93,28 @@
     moonGroup.add(moon);
     moon.position.x = 2;
     
-    
+    // light
     const light = new THREE.PointLight(0xffffff, 30,100);
     light.position.set(0,0,0);
     sun.add(light);
     const ambient = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambient);
     
+    //shadow
+    renderer.shadowMap.enabled = true;
+    light.castShadow = true;
+    earth.castShadow = true;
+    moon.receiveShadow = true;
+    
+    //background 
+    scene.background = new THREE.Color(0x87ceeb);
+    
+    // fog
+    scene.fog = new THREE.Fog(
+      0x87ceeb,
+      10,
+      20
+    );
     
     function animate() {
       requestAnimationFrame(animate);
