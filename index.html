@@ -7,10 +7,26 @@
     body {
       margin: 0;
     }
+    
+    #loading {
+      position: fixed;
+      inset: 0;
+      
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      
+      background: black;
+      color: white;
+      font-size: 1.5rem;
+    }
   </style>
 </head>
 
 <body>
+  <div id="loading">
+    Loading Model...
+  </div>
   
   <canvas id="bg">
   
@@ -26,7 +42,8 @@
     import * as THREE from "three";
     
     import { OrbitControls } from "https://unpkg.com/three@0.179.1/examples/jsm/controls/OrbitControls.js";
-    
+    import { GLTFLoader } from "https://unpkg.com/three@0.179.1/examples/jsm/loaders/GLTFLoader.js";
+    const canvas = document.getElementById("bg");
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -34,97 +51,71 @@
       0.1,
       1000
     );
-    const canvas = document.querySelector("#bg");
-    const renderer = new THREE.WebGLRenderer({
-      canvas
-    });
+    const renderer = new THREE.WebGLRenderer({ canvas });
+    renderer.shadowMap.enabled = true;
     renderer.setSize(window.innerWidth, window.innerHeight);
-    const controls = new OrbitControls(
-      camera,
-      canvas
-    );
-    controls.enableDamping = true;
-    controls.target.set(0,0,0);
-    camera.position.set(0,5,10);
-    
-    // event listener 
-    window.addEventListener("resize", ()=>{
+    window.addEventListener("resize", () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.target.set(0, 0, 0);
+    camera.position.set(5,5,10);
     
-    let loader = new THREE.TextureLoader();
-    const earthTexture = loader.load("earth.jpg");
-    // earth
-    const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
-    const sphereMaterial = new THREE.MeshStandardMaterial({
-      map: earthTexture
-    });
-    
-    const earth = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    earth.rotation.z = 0.41;
-    earth.position.x = 5;
-    
-    // Sun
-    const sunTexture = loader.load("sun.jpg");
-    const sunGeometry = new THREE.SphereGeometry(1, 32, 32);
-    const sunMaterial = new THREE.MeshBasicMaterial({
-      map: sunTexture
-    });
-    const sun = new THREE.Mesh(sunGeometry, sunMaterial);
-    scene.add(sun);
-    
-    // earth Grouping
-    const earthGroup = new THREE.Group();
-    earthGroup.add(earth);
-    scene.add(earthGroup);
-    // moon groupinv
-    const moonGroup = new THREE.Group();
-    earth.add(moonGroup);
-    
-    // moon
-    const moonTexture = loader.load("moon.jpg");
-    const moonGeometry = new THREE.SphereGeometry(0.35, 32, 32);
-    const moonMaterial = new THREE.MeshStandardMaterial({
-      map: moonTexture
-    });
-    const moon = new THREE.Mesh(moonGeometry, moonMaterial);
-    moonGroup.add(moon);
-    moon.position.x = 2;
-    
-    // light
-    const light = new THREE.PointLight(0xffffff, 30,100);
-    light.position.set(0,0,0);
-    sun.add(light);
-    const ambient = new THREE.AmbientLight(0xffffff, 0.2);
-    scene.add(ambient);
-    
-    //shadow
-    renderer.shadowMap.enabled = true;
-    light.castShadow = true;
-    earth.castShadow = true;
-    moon.receiveShadow = true;
-    
-    //background 
-    scene.background = new THREE.Color(0x87ceeb);
-    
-    // fog
-    scene.fog = new THREE.Fog(
-      0x87ceeb,
-      10,
-      20
+    const light = new THREE.DirectionalLight(
+      0xffffff,
+      1.5
     );
     
+    light.position.set(5, 5, 5);
+    
+    scene.add(light);
+    
+    scene.add(
+      new THREE.AmbientLight(
+        0xffffff,
+        0.2
+      )
+    );
+    scene.background = new THREE.Color(0x909090);
+    const loading = document.getElementById("loading");
+    
+    const glLoader = new GLTFLoader();
+    let model;
+    glLoader.load(
+      "model.glb",
+      (gltf) => {
+        gltf.scene.position.set(0, 0, 0);
+        gltf.scene.scale.set(
+          15,
+          15,
+          15
+        );
+        loading.style.display = "none";
+        model = gltf.scene;
+        model.castShadow = true;
+        model.traverse((child)=>{
+          if(child.isMesh){
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        console.log(model);
+        scene.add(model);
+      },
+      (xhr) => {
+        const percent = Math.round((xhr.loaded / xhr.total) * 100);
+        loading.textContent = `Loading ${percent}%`;
+      }
+    );
     function animate() {
       requestAnimationFrame(animate);
-      sun.rotation.y += 0.0025;
-      earth.rotation.y += 0.01;
-      earthGroup.rotation.y += 0.005;
-      moonGroup.rotation.y += 0.02;
-      moon.rotation.y += 0.005;
       controls.update();
-      
+      if(model){
+      model.rotation.y +=0.01;
+      }
       renderer.render(scene, camera);
     }
     animate();
