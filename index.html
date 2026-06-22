@@ -62,7 +62,7 @@
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
     controls.target.set(0, 0, 0);
-    camera.position.set(5,5,10);
+    camera.position.set(5,8,8);
     
     const light = new THREE.DirectionalLight(
       0xffffff,
@@ -79,43 +79,42 @@
         0.2
       )
     );
-    scene.background = new THREE.Color(0x909090);
     const loading = document.getElementById("loading");
     
     const glLoader = new GLTFLoader();
     let model;
+    let mixer;
     glLoader.load(
       "model.glb",
       (gltf) => {
         gltf.scene.position.set(0, 0, 0);
         gltf.scene.scale.set(
-          15,
-          15,
-          15
+          10,10,10
         );
         loading.style.display = "none";
         model = gltf.scene;
-        model.castShadow = true;
-        model.traverse((child)=>{
-          if(child.isMesh){
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-        console.log(model);
         scene.add(model);
+        mixer = new THREE.AnimationMixer(model);
+        const walk = mixer.clipAction(gltf.animations[0]);
+        walk.fadeIn(0.5);
+        walk.play();
+        
       },
       (xhr) => {
         const percent = Math.round((xhr.loaded / xhr.total) * 100);
         loading.textContent = `Loading ${percent}%`;
       }
     );
+    const clock = new THREE.Clock();
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
-      if(model){
-      model.rotation.y +=0.01;
+      
+      if(mixer){
+        const delta = clock.getDelta();
+        mixer.update(delta);
       }
+      
       renderer.render(scene, camera);
     }
     animate();
