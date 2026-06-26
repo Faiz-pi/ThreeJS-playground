@@ -66,6 +66,28 @@
       inset: 0;
       border-radius: inherit;
     }
+    
+    #bottomFade {
+      
+      position: fixed;
+      
+      left: 0;
+      bottom: 0;
+      
+      width: 100%;
+      height: 40vh;
+      
+      pointer-events: none;
+      
+      background: linear-gradient(to top,
+          rgba(6, 9, 17, .98),
+          rgba(6, 9, 17, .75),
+          rgba(6, 9, 17, .35),
+          transparent);
+      
+      z-index: 5;
+      
+    }
   </style>
 </head>
 
@@ -83,7 +105,7 @@
       <button id="backward">▼</button>
     </div>
   </div>
-  
+  <div id="bottomFade"></div>
   <canvas id="bg">
   
   </canvas>
@@ -106,13 +128,14 @@
       0.1,
       1000
     );
-    const renderer = new THREE.WebGLRenderer({ canvas });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.shadowMap.enabled = true;
     renderer.setSize(window.innerWidth, window.innerHeight);
     window.addEventListener("resize", () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     });
     // const controls = new OrbitControls(camera, canvas);
     // controls.enableDamping = true;
@@ -120,27 +143,33 @@
     camera.position.y = 5;
     camera.position.z = 5;
     
-    const light = new THREE.DirectionalLight(
+    const ambient = new THREE.AmbientLight(
+      0xffffff,
+      0.7
+    );
+    
+    scene.add(ambient);
+    
+    const sun = new THREE.DirectionalLight(
       0xffffff,
       3
     );
     
-    light.position.set(5, 5, 5);
+    sun.position.set(30, 40, 20);
     
-    scene.add(light);
-    
-    scene.add(
-      new THREE.AmbientLight(
-        0xffffff,
-        0.2
-      )
+    scene.add(sun);
+    scene.background = new THREE.Color(0x88cfff);
+    scene.fog = new THREE.Fog(
+      0xddefff,
+      30,
+      120
     );
-    
     const geometry = new THREE.BoxGeometry();
     const material = new THREE.MeshStandardMaterial({
-      color: 0xfff
+      color: 0xffffff
     });
     const box = new THREE.Mesh(geometry, material);
+    box.position.y = 0.5;
     scene.add(box);
     
     const key = {
@@ -186,7 +215,26 @@
     const moveSpeed = 5;
     const turnSpeed = 2;
     
-    const grid = new THREE.GridHelper(100, 100);
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(500, 500),
+      new THREE.MeshStandardMaterial({
+        color: 0x202633
+      })
+    );
+    
+    ground.rotation.x = -Math.PI / 2;
+    
+    ground.receiveShadow = true;
+    
+    scene.add(ground);
+    
+    const grid = new THREE.GridHelper(
+      500,
+      100,
+      0x4a5568,
+      0x323b4b
+    );
+    
     scene.add(grid);
     const clock = new THREE.Clock();
     
