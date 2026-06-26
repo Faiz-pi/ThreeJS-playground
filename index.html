@@ -20,12 +20,50 @@
       color: white;
       font-size: 1.5rem;
     }
+    
+    #controller {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      
+      display: flex;
+      gap: 15px;
+      
+      z-index: 100;
+    }
+    
+    #controller button {
+      width: 70px;
+      height: 70px;
+      
+      border: none;
+      border-radius: 50%;
+      
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      
+      color: white;
+      font-size: 28px;
+      
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    #controller button:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.4);
+    }
   </style>
 </head>
 
 <body>
-  <div id="loading">
-    Loading Model...
+  <div id="controller">
+    <button id="left">◀</button>
+    <button id="forward">▲</button>
+    <button id="backward">▼</button>
+    <button id="right">▶</button>
   </div>
   
   <canvas id="bg">
@@ -42,7 +80,6 @@
     import * as THREE from "three";
     
     import { OrbitControls } from "https://unpkg.com/three@0.179.1/examples/jsm/controls/OrbitControls.js";
-    import { GLTFLoader } from "https://unpkg.com/three@0.179.1/examples/jsm/loaders/GLTFLoader.js";
     const canvas = document.getElementById("bg");
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -59,14 +96,15 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
-    const controls = new OrbitControls(camera, canvas);
-    controls.enableDamping = true;
-    controls.target.set(0, 0, 0);
-    camera.position.set(5,8,8);
+    // const controls = new OrbitControls(camera, canvas);
+    // controls.enableDamping = true;
+    //  controls.target.set(0, 0, 0);
+    camera.position.y = 5;
+    camera.position.z = 5;
     
     const light = new THREE.DirectionalLight(
       0xffffff,
-      1.5
+      3
     );
     
     light.position.set(5, 5, 5);
@@ -79,42 +117,81 @@
         0.2
       )
     );
-    const loading = document.getElementById("loading");
     
-    const glLoader = new GLTFLoader();
-    let model;
-    let mixer;
-    glLoader.load(
-      "model.glb",
-      (gltf) => {
-        gltf.scene.position.set(0, 0, 0);
-        gltf.scene.scale.set(
-          10,10,10
-        );
-        loading.style.display = "none";
-        model = gltf.scene;
-        scene.add(model);
-        mixer = new THREE.AnimationMixer(model);
-        const walk = mixer.clipAction(gltf.animations[0]);
-        walk.fadeIn(0.5);
-        walk.play();
-        
-      },
-      (xhr) => {
-        const percent = Math.round((xhr.loaded / xhr.total) * 100);
-        loading.textContent = `Loading ${percent}%`;
-      }
-    );
+    const geometry = new THREE.BoxGeometry();
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xfff
+    });
+    const box = new THREE.Mesh(geometry, material);
+    scene.add(box);
+    
+    const key = {
+      forward: false,
+      backward: false,
+      left: false,
+      right: false
+    }
+    
+    const forwardBtn = document.getElementById("forward");
+    const leftBtn = document.getElementById("left");
+    const rightBtn = document.getElementById("right");
+    const backwardBtn = document.getElementById("backward");
+    
+    forwardBtn.addEventListener("touchstart", () => {
+      key.forward = true
+    });
+    forwardBtn.addEventListener("touchend", () => {
+      key.forward = false
+    });
+    
+    backwardBtn.addEventListener("touchstart", () => {
+      key.backward = true
+    });
+    backwardBtn.addEventListener("touchend", () => {
+      key.backward = false
+    });
+    
+    leftBtn.addEventListener("touchstart", () => {
+      key.left = true
+    });
+    leftBtn.addEventListener("touchend", () => {
+      key.left = false
+    });
+    
+    rightBtn.addEventListener("touchstart", () => {
+      key.right = true
+    });
+    rightBtn.addEventListener("touchend", () => {
+      key.right = false
+    });
+    
+    const moveSpeed = 5;
+    const turnSpeed = 2;
+    
+    const grid = new THREE.GridHelper(100, 100);
+    scene.add(grid);
     const clock = new THREE.Clock();
+    
     function animate() {
       requestAnimationFrame(animate);
-      controls.update();
-      
-      if(mixer){
-        const delta = clock.getDelta();
-        mixer.update(delta);
+      //controls.update();
+      const delta = clock.getDelta();
+      if (key.left) {
+        box.rotation.y += turnSpeed * delta;
       }
-      
+      if (key.right) {
+        box.rotation.y -= turnSpeed * delta;
+      }
+      if (key.forward) {
+        box.translateZ(-moveSpeed * delta);
+      }
+      if (key.backward) {
+        box.translateZ(moveSpeed * delta);
+      }
+      camera.position.x = box.position.x;
+      camera.position.y = box.position.y + 5;
+      camera.position.z = box.position.z + 8;
+      camera.lookAt(box.position)
       renderer.render(scene, camera);
     }
     animate();
