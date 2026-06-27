@@ -6,124 +6,121 @@
   <style>
     body {
       margin: 0;
+      overflow: hidden;
+      user-select: none;
     }
+    
+    #bottomFade {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 35vh;
+      
+      background: linear-gradient(to top,
+          rgba(0, 0, 0, .8),
+          transparent);
+      
+      pointer-events: none;
+    }
+    
+    /* Movement Controller */
     
     #controller {
       position: fixed;
-      bottom: 40px;
-      left: 25px;
-      z-index: 100;
-      gap: 25px;
+      left: 20px;
+      bottom: 20px;
+      z-index: 10;
+      
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
     }
     
-    #controller button {
-      width: 90px;
-      height: 90px;
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+    
+    #controller button,
+    #shift,
+    #jump {
+      
+      width: 70px;
+      height: 70px;
       
       border: none;
       border-radius: 50%;
       
       background: rgba(255, 255, 255, .2);
+      
+      color: white;
+      font-size: 28px;
+      
       backdrop-filter: blur(10px);
       
-      color: white;
-      font-size: 36px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, .3);
     }
     
-    #move-pad {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .middle-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .center {
-      width: 30px;
-      height: 30px;
-    }
-    
-    #move-pad button {
-      width: 70px;
-      height: 70px;
+    #controller button:active,
+    #shift:active,
+    #jump:active {
       
-      border: none;
-      border-radius: 22px;
-      
-      background: rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      
-      color: white;
-      font-size: 30px;
-      font-weight: bold;
-      
-      box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.35),
-        inset 0 1px 2px rgba(255, 255, 255, 0.2);
-      
-      transition: transform .1s, background .2s;
+      transform: scale(.92);
+      background: rgba(255, 255, 255, .35);
     }
     
-    #move-pad button:active {
-      transform: scale(0.92);
-      background: rgba(255, 255, 255, 0.28);
-    }
+    /* Sprint Button */
     
-    #move-pad button::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-    }
-    
-    #bottomFade {
+    #shift {
       
       position: fixed;
       
-      left: 0;
-      bottom: 0;
+      right: 20px;
+      bottom: 40px;
       
-      width: 100%;
-      height: 40vh;
+      width: 85px;
+      height: 85px;
       
-      pointer-events: none;
+      font-size: 18px;
+      font-weight: bold;
       
-      background: linear-gradient(to top,
-          rgba(6, 9, 17, .98),
-          rgba(6, 9, 17, .75),
-          rgba(6, 9, 17, .35),
-          transparent);
+      z-index: 10;
+    }
+    
+    #jump {
+      position: fixed;
+      right: 20px;
+      bottom: 150px;
+      width: 85px;
+      height: 85px;
+      font-size: 18px;
+      font-weight: bold;
       
-      z-index: 5;
-      
+      z-index: 10;
     }
   </style>
 </head>
 
 <body>
   <div id="controller">
-    <div id="move-pad">
-      <button id="forward">▲</button>
-      
-      <div class="middle-row">
-        <button id="left">◀</button>
-        <div class="center"></div>
-        <button id="right">▶</button>
-      </div>
-      
-      <button id="backward">▼</button>
+    <button id="forward">▲</button>
+    
+    <div class="row">
+      <button id="left">◀</button>
+      <button id="right">▶</button>
     </div>
+    
+    <button id="backward">▼</button>
   </div>
-  <div id="bottomFade"></div>
-  <canvas id="bg">
   
-  </canvas>
+  <button id="shift">Sprint</button>
+  <button id="jump">Jump</button>
+  
+  <div id="bottomFade"></div>
+  
+  <canvas id="bg"></canvas>
   <script type="importmap">
     {
   "imports": {
@@ -152,6 +149,7 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     });
+    renderer.shadowMap.enabled = true;
     // const controls = new OrbitControls(camera, canvas);
     // controls.enableDamping = true;
     //  controls.target.set(0, 0, 0);
@@ -171,7 +169,7 @@
     );
     
     sun.position.set(30, 40, 20);
-    
+    sun.castShadow = true;
     scene.add(sun);
     scene.background = new THREE.Color(0x88cfff);
     scene.fog = new THREE.Fog(
@@ -185,19 +183,35 @@
     });
     const box = new THREE.Mesh(geometry, material);
     box.position.y = 0.5;
+    box.castShadow = true;
     scene.add(box);
-    
     const key = {
       forward: false,
       backward: false,
       left: false,
-      right: false
+      right: false,
+      shift: false
     }
     
     const forwardBtn = document.getElementById("forward");
     const leftBtn = document.getElementById("left");
     const rightBtn = document.getElementById("right");
     const backwardBtn = document.getElementById("backward");
+    const shiftBtn = document.getElementById("shift");
+    const jumpBtn = document.getElementById("jump");
+    
+    shiftBtn.addEventListener("touchstart", () => {
+      key.shift = true
+    });
+    shiftBtn.addEventListener("touchend", () => {
+      key.shift = false
+    });
+    jumpBtn.addEventListener("touchend", () => {
+      key.jump = false
+    });
+    jumpBtn.addEventListener("touchstart", () => {
+      key.jump = true
+    });
     
     forwardBtn.addEventListener("touchstart", () => {
       key.forward = true
@@ -227,9 +241,6 @@
       key.right = false
     });
     
-    const moveSpeed = 5;
-    const turnSpeed = 2;
-    
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(500, 500),
       new THREE.MeshStandardMaterial({
@@ -238,9 +249,7 @@
     );
     
     ground.rotation.x = -Math.PI / 2;
-    
     ground.receiveShadow = true;
-    
     scene.add(ground);
     
     const grid = new THREE.GridHelper(
@@ -252,22 +261,48 @@
     
     scene.add(grid);
     const clock = new THREE.Clock();
+    const moveSpeed = 5;
+    const turnSpeed = 2;
+    console.log(box.position.y);
+    let velocityY = 0;
+    const jumpForce = 10;
+    const gravity = -20;
+    let isGrounded = true;
     
     function animate() {
       requestAnimationFrame(animate);
       //controls.update();
       const delta = clock.getDelta();
+      const sprint = moveSpeed * 2;
       if (key.left) {
         box.rotation.y += turnSpeed * delta;
       }
       if (key.right) {
         box.rotation.y -= turnSpeed * delta;
       }
-      if (key.forward) {
+      if (key.forward && key.shift) {
+        box.translateZ(-sprint * delta);
+      } else if (key.forward) {
         box.translateZ(-moveSpeed * delta);
       }
-      if (key.backward) {
+      if (key.backward && key.shift) {
+        box.translateZ(sprint * delta);
+      } else if (key.backward) {
         box.translateZ(moveSpeed * delta);
+      }
+      if (key.jump && isGrounded) {
+        velocityY = jumpForce;
+        isGrounded = false;
+        key.jump = false;
+      }
+      if (!isGrounded) {
+        velocityY += gravity * delta;
+        box.position.y += velocityY * delta;
+      }
+      if(box.position.y <= 0.5){
+        velocityY = 0;
+        isGrounded = true;
+        box.position.y = 0.5;
       }
       camera.position.x = box.position.x;
       camera.position.y = box.position.y + 5;
