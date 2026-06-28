@@ -262,34 +262,32 @@
     scene.add(grid);
     const clock = new THREE.Clock();
     const moveSpeed = 5;
-    const turnSpeed = 2;
     console.log(box.position.y);
     let velocityY = 0;
     const jumpForce = 10;
     const gravity = -20;
     let isGrounded = true;
     
+    const direction = new THREE.Vector3();
+    
     function animate() {
       requestAnimationFrame(animate);
       //controls.update();
+      direction.set(0, 0, 0);
       const delta = clock.getDelta();
-      const sprint = moveSpeed * 2;
-      if (key.left) {
-        box.rotation.y += turnSpeed * delta;
-      }
-      if (key.right) {
-        box.rotation.y -= turnSpeed * delta;
-      }
-      if (key.forward && key.shift) {
-        box.translateZ(-sprint * delta);
-      } else if (key.forward) {
-        box.translateZ(-moveSpeed * delta);
-      }
-      if (key.backward && key.shift) {
-        box.translateZ(sprint * delta);
-      } else if (key.backward) {
-        box.translateZ(moveSpeed * delta);
-      }
+      
+      //control----------------
+      if (key.left) direction.x -=1;
+      if (key.right) direction.x +=1;
+      if (key.forward) direction.z -=1;
+      if (key.backward) direction.z +=1;
+      const speed = key.shift ? moveSpeed * 2 : moveSpeed;
+      direction.normalize();
+      direction.multiplyScalar(speed * delta);
+      box.position.add(direction);
+      // control ---------------
+      
+      //jump fucnction 
       if (key.jump && isGrounded) {
         velocityY = jumpForce;
         isGrounded = false;
@@ -299,7 +297,7 @@
         velocityY += gravity * delta;
         box.position.y += velocityY * delta;
       }
-      if(box.position.y <= 0.5){
+      if (box.position.y <= 0.5) {
         velocityY = 0;
         isGrounded = true;
         box.position.y = 0.5;
