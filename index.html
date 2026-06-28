@@ -177,7 +177,7 @@
       30,
       120
     );
-    const geometry = new THREE.BoxGeometry();
+    const geometry = new THREE.BoxGeometry(1,1,2);
     const material = new THREE.MeshStandardMaterial({
       color: 0xffffff
     });
@@ -270,6 +270,7 @@
     
     const direction = new THREE.Vector3();
     
+    
     function animate() {
       requestAnimationFrame(animate);
       //controls.update();
@@ -285,6 +286,12 @@
       direction.normalize();
       direction.multiplyScalar(speed * delta);
       box.position.add(direction);
+      
+      if (direction.length() > 0){
+        const angle = Math.atan2(direction.x, direction.z);
+        console.log(angle);
+        box.rotation.y = angle;
+      }
       // control ---------------
       
       //jump fucnction 
