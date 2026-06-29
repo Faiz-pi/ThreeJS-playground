@@ -271,6 +271,10 @@
     const direction = new THREE.Vector3();
     const targetRotation = new THREE.Quaternion();
     
+    const cameraOffset = new THREE.Vector3(0,5,8);
+    const rotatedOffset = new THREE.Vector3();
+    const cameraTarget = new THREE.Vector3();
+    
     function animate() {
       requestAnimationFrame(animate);
       //controls.update();
@@ -288,7 +292,7 @@
       direction.multiplyScalar(speed * delta);
       box.position.add(direction);
       
-      if (direction.length() > 0) {
+      if (direction.lengthSq() > 0) {
         targetRotation.setFromEuler(
           new THREE.Euler(0, angle, 0)
         );
@@ -315,9 +319,11 @@
         isGrounded = true;
         box.position.y = 0.5;
       }
-      camera.position.x = box.position.x;
-      camera.position.y = box.position.y + 5;
-      camera.position.z = box.position.z + 8;
+      rotatedOffset.copy(cameraOffset);
+      rotatedOffset.applyQuaternion(box.quaternion);
+      cameraTarget.copy(box.position);
+      cameraTarget.add(rotatedOffset);
+      camera.position.lerp(cameraTarget,0.2);
       camera.lookAt(box.position)
       renderer.render(scene, camera);
     }
